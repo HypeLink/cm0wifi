@@ -1,0 +1,1 @@
+#define UART1_CMD_TOTAL		13
