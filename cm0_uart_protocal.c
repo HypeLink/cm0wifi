@@ -53,21 +53,7 @@ bool Usart1_CMD_E2(void);
 
 void Usart1_Recv_Pro(void);
 
-<<<<<<< HEAD
 void USART1_Process(void)
-=======
-/**wusadadadp***/
-
-typedef enum
-{
-	false,
-	true
-}bool;
-
-#define  dl_cmd_total   50				//队列容量
-
-typedef struct
->>>>>>> d7d26a91f85ca52633f708379340a9f54fc3453a
 {
 	if(!empty_queue(&Q))
 	{
@@ -87,22 +73,22 @@ unsigned char  Out_waiting_index_G = 0;                                        /
 unsigned char  In_saved_index_G    = 0;                                        /* 已接收数据索引值              */
 unsigned char  In_waiting_index_G  = 0;                                        /* 待接收数据索引值              */
 
-const char CMD_A1[]="AT+SOCKB\r";
+const char CMD_A1[]="0000000";
 const char CMD_A2[]="AT+SOCKB\r";
-char CMD_B1_1[]="AT+SOCKB\r";
-char CMD_B1_2[]="AT+SOCKB\r";
-char CMD_B1_3[]="AT+SOCKB\r";
-const char CMD_B2[]="AT+SOCKB\r";
-const char CMD_B3[]="AT+SOCKB\r";
-const char CMD_B4[]="AT+SOCKB\r";
-const char CMD_C1[]="AT+SOCKB\r";
-const char CMD_C2[]="AT+SOCKB\r";
-const char CMD_C3[]="AT+SOCKB\r";
-const char CMD_C4[]="AT+SOCKB\r";
-const char CMD_D1[]="AT+SOCKB\r";
-const char CMD_D2[]="AT+SOCKB\r";
-char CMD_E1[]="AT+SOCKB\r";
-char CMD_E2[]="AT+SOCKB\r";
+char CMD_B1_1[]="AT+WJAP=192.168.1.1,wasdwasdwasd\r";
+char CMD_B1_2[]="AT+SOCKB=protocol,43,192.168.1.1\r";
+const char CMD_B1_3[]="AT+TCPDISB=on\r";
+const char CMD_B2[]="0000000";
+const char CMD_B3[]="AT+WRMID=wasdwasd\r";
+const char CMD_B4[]="AT+WSKEY=WPA2PSK,AES,wasdwasd\r";
+const char CMD_C1[]="+++a";
+const char CMD_C2[]="AT+TMODE=cmd\r";
+const char CMD_C3[]="AT+E=on\r";
+const char CMD_C4[]="AT+WMODE=APSTA\r";
+const char CMD_D1[]="AT+RECV=54,1\r";
+const char CMD_D2[]="AT+RCVB=54,1\r";
+char CMD_E1[]="AT+SEND=54\r";
+char CMD_E2[]="AT+SEND=54\r";
 
 typedef enum
 {
