@@ -30,6 +30,7 @@
   Private Function Defines
 *********************************************************************************************************/
 #include<malloc.h>
+#include "cm0_data_struct.h"
 
 /*********************************************************************************************************
   Private Function Defines
@@ -52,31 +53,50 @@ bool Usart1_CMD_E2(void);
 
 void Usart1_Recv_Pro(void);
 
-
-
-typedef enum
+void USART1_Process(void)
 {
-	false,
-	true
-}bool;
+	if(!empty_queue(&Q))
+	{
+		if(check_queue(&Q))
+		{
+			del_queue(&Q);
+		}
+	}
+}
 
-#define  dl_cmd_total   50				//队列容量
+#define   RX_BUFFER_LENGTH   100
+#define   TX_BUFFER_LENGTH   100
+static unsigned char    GucUartRxBuffer[RX_BUFFER_LENGTH] = {0};                /* 接收缓冲区                   */
+static unsigned char    GucUartTxBuffer[TX_BUFFER_LENGTH] = {0};                /* 发送缓冲区                   */
 
-typedef struct
-{
-	char* CMD_DATA;						//队列数据
-	struct DL_CMD*  DL_NEXT;					//指向下一个节点
-}DL_CMD;
+unsigned char  Out_waiting_index_G = 0;                                        /* 待发送数据索引值              */
+unsigned char  In_saved_index_G    = 0;                                        /* 已接收数据索引值              */
+unsigned char  In_waiting_index_G  = 0;                                        /* 待接收数据索引值              */
 
-DL_CMD*  DL_HEAD = NULL;						//队列头指针
-DL_CMD*  DL_TAIL = NULL;						//队列尾指针	
-
+const char CMD_A1[]="AT+SOCKB\r";
+const char CMD_A2[]="AT+SOCKB\r";
+char CMD_B1_1[]="AT+SOCKB\r";
+char CMD_B1_2[]="AT+SOCKB\r";
+char CMD_B1_3[]="AT+SOCKB\r";
+const char CMD_B2[]="AT+SOCKB\r";
+const char CMD_B3[]="AT+SOCKB\r";
+const char CMD_B4[]="AT+SOCKB\r";
+const char CMD_C1[]="AT+SOCKB\r";
+const char CMD_C2[]="AT+SOCKB\r";
+const char CMD_C3[]="AT+SOCKB\r";
+const char CMD_C4[]="AT+SOCKB\r";
+const char CMD_D1[]="AT+SOCKB\r";
+const char CMD_D2[]="AT+SOCKB\r";
+char CMD_E1[]="AT+SOCKB\r";
+char CMD_E2[]="AT+SOCKB\r";
 
 typedef enum
 {
 	AT_CMD_A1,
 	AT_CMD_A2,
-	AT_CMD_B1,
+	AT_CMD_B1_1,
+	AT_CMD_B1_2,
+	AT_CMD_B1_3,
 	AT_CMD_B2,
 	AT_CMD_B3,
 	AT_CMD_B4,
@@ -89,38 +109,14 @@ typedef enum
 	AT_CMD_E1,
 	AT_CMD_E2
 } CMD_TYPE;
-
-#define   RX_BUFFER_LENGTH   100
-#define   TX_BUFFER_LENGTH   100
-static unsigned char    GucUartRxBuffer[RX_BUFFER_LENGTH] = {0};                /* 接收缓冲区                   */
-static unsigned char    GucUartTxBuffer[TX_BUFFER_LENGTH] = {0};                /* 发送缓冲区                   */
-
-unsigned char  Out_waiting_index_G = 0;                                        /* 待发送数据索引值              */
-unsigned char  In_saved_index_G    = 0;                                        /* 已接收数据索引值              */
-unsigned char  In_waiting_index_G  = 0;                                        /* 待接收数据索引值              */
-
-
-const char CMD_A1[]="AT+SOCKB\r";
-const char CMD_A2[]="AT+SOCKB\r";
-const char CMD_B1[]="AT+SOCKB\r";
-const char CMD_B2[]="AT+SOCKB\r";
-const char CMD_B3[]="AT+SOCKB\r";
-const char CMD_B4[]="AT+SOCKB\r";
-const char CMD_C1[]="AT+SOCKB\r";
-const char CMD_C2[]="AT+SOCKB\r";
-const char CMD_C3[]="AT+SOCKB\r";
-const char CMD_C4[]="AT+SOCKB\r";
-const char CMD_D1[]="AT+SOCKB\r";
-const char CMD_D2[]="AT+SOCKB\r";
-const char CMD_E1[]="AT+SOCKB\r";
-const char CMD_E2[]="AT+SOCKB\r";
-
  
 const char * at_cmds_list[] = 
 {		
 		&CMD_A1,
 		&CMD_A2,
-		&CMD_B1,
+		&CMD_B1_1,
+		&CMD_B1_2,
+		&CMD_B1_3,
 		&CMD_B2,
 		&CMD_B3,
 		&CMD_B4,
@@ -133,41 +129,6 @@ const char * at_cmds_list[] =
 		&CMD_E1,
 		&CMD_E2
 };
-
-
-void DL_init()
-{
-	DL_HEAD = (DL_CMD *)malloc(sizeof(DL_CMD));			//分配队列空间
-	DL_HEAD->CMD_DATA = NULL;
-	DL_HEAD->DL_NEXT = NULL;
-	DL_TAIL = DL_HEAD.DL_NEXT;
-}
-
-void  PUSH_DL(char * CMD)
-{
-	if(DL_HEAD->CMD_DATA == NULL)
-	{
-		DL_HEAD->CMD_DATA = CMD;								//入队
-		DL_TAIL->DL_NEXT = (DL_CMD *)malloc(sizeof(DL_CMD));	
-	}
-	else
-	{
-		while(DL_TAIL != NULL)
-			DL_TAIL = DL_TAIL->DL_NEXT;
-
-		DL_TAIL = (DL_CMD *)malloc(sizeof(DL_CMD));	
-		DL_TAIL->DL_NEXT = NULL;
-		DL_TAIL->DL_DATA = CMD;							//入队
-		DL_TAIL = DL_TAIL->DL_NEXT;		
-	}
-}								
-
-void RELESE_DL()
-{
-	DL_CMD * p = DL_HEAD;
-	DL_HEAD = DL_HEAD->DL_NEXT;
-	free(p);
-}
 
 
 bool Usart1_CMD_A2(void)
@@ -183,24 +144,10 @@ bool Usart1_CMD_A2(void)
 		return false;
 }
 
-bool Usart1_CMD_B1(void)
-{
-	bool B1_1 = false, B1_2 = false;
-	
-	B1_1 = Usart1_CMD_B1_1();
-
-	//等待时间
-	if(B1_1) 
-		B1_2 = Usart1_CMD_B1_2();
-	
-	if(B1_2)
-		Usart1_CMD_B1_3();
-}
-
 bool Usart1_CMD_B1_1(void)
 {
 	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1]);
+	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_1]);
 	Out_waiting_index_G = strlen(GucUartTxBuffer);
 	USART1_SEND();
 
@@ -214,7 +161,7 @@ bool Usart1_CMD_B1_1(void)
 bool Usart1_CMD_B1_2(void)
 {
 		memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-		strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1]);
+		strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_2]);
 		Out_waiting_index_G = strlen(GucUartTxBuffer);
 		USART1_SEND();
 
@@ -227,7 +174,7 @@ bool Usart1_CMD_B1_2(void)
 bool Usart1_CMD_B1_3(void)
 {
 	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1]);
+	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_3]);
 	Out_waiting_index_G = strlen(GucUartTxBuffer);
 	USART1_SEND();
 
@@ -236,6 +183,33 @@ bool Usart1_CMD_B1_3(void)
 	else
 		return false;
 }
+
+bool Usart1_CMD_B1(void)
+{
+	static unsigned char status = 0;
+
+	bool B1_step_ok = false;
+
+	switch(status)
+	{
+		case 0:
+			B1_step_ok = Usart1_CMD_B1_1();
+			status = (B1_step_ok) ? 1:0;
+			return 0;
+		case 1:
+			B1_step_ok = Usart1_CMD_B1_2();
+			status = (B1_step_ok) ? 2:1;
+			return 0;
+		case 2:
+			B1_step_ok = Usart1_CMD_B1_3();
+			status = (B1_step_ok) ? 0:2;
+			return B1_step_ok;
+		default:
+			break;
+
+	}
+}
+
 
 bool Usart1_CMD_B2(void)
 {

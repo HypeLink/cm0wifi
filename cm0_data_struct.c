@@ -25,14 +25,27 @@
 ** Descriptions:            
 **
 *********************************************************************************************************/
+#include "cm0_uart_protocal.h"
 
-typedef struct {
-	u8 xxx1;
-	u8 xxx2;
-	u8 xxx3;
-} Usart1_CMD_PARAM;
+typedef bool (*Usart1_CMD)(u8 );
 
-static Usart1_CMD_PARAM cmdqueue[QUEUE_SIZE];
+typedef struct Queue2  
+{  
+    Usart1_CMD *pBase;	//pBase指向数组名（通常静态队列都使用循环队列）  
+	#define QUEUE_SIZE	21
+    unsigned char front;			//数组下标，这里规定从零开始  
+    unsigned char rear;  
+}QUEUE;//QUEUE代表了struct Queue
+
+
+static Usart1_CMD cmdqueue[QUEUE_SIZE] = {
+	Usart1_CMD_C1,
+	Usart1_CMD_C2,
+	Usart1_CMD_C3,
+	Usart1_CMD_C4,
+	0,
+};
+
 QUEUE Q;
 Usart1_CMD_PARAM cmd2null = {0,};
 u8 cmd3_delay_cnt = 0;
@@ -45,8 +58,12 @@ u8 cmd3_delay_cnt = 0;
  * 
  * @param pQ 
  */
-void initQ(QUEUE *pQ);
-
+void initQ(QUEUE *pQ)
+{
+	pQ->pBase = cmdqueue;
+	pQ->front=0;  
+    pQ->rear=3;
+}
 /**
  * full_queue 
  * 队列是否已满判断函数 
@@ -55,9 +72,15 @@ void initQ(QUEUE *pQ);
  * 
  * @param pQ 队列指针
  * 
- * @return u8 队列满 返回 1 未满 返回0
+ * @return bool 队列满 返回 1 未满 返回0
  */
-u8 full_queue(QUEUE *pQ);
+bool full_queue(QUEUE *pQ)
+{
+	if((pQ->rear+1)%QUEUE_SIZE == pQ->front)  
+        return true;  
+    else  
+        return false;
+}
 
 /**
  * empty_queue 
@@ -67,9 +90,15 @@ u8 full_queue(QUEUE *pQ);
  * 
  * @param pQ 队列指针
  * 
- * @return u8 队列空 返回 1 不为空 返回0
+ * @return bool 队列空 返回 1 不为空 返回0
  */
-u8 empty_queue(QUEUE *pQ);
+bool empty_queue(QUEUE *pQ)
+{
+	if(pQ->rear==pQ->front)//因为队列不为空时，rear和front肯定不相等  
+        return true;  
+    else  
+        return false;  
+}
 
 /**
  * en_queue 
@@ -80,10 +109,22 @@ u8 empty_queue(QUEUE *pQ);
  * @param pQ   队列指针
  * @param cmdn 命令n
  * 
- * @return u8 
+ * @return bool 
  */
-u8 en_queue(QUEUE *pQ,Usart1_CMD_PARAM cmdn);
+bool en_queue(QUEUE *pQ,Usart1_CMD cmdn)
+{
+	u8 i = pQ->front;
 
+	if(full_queue(pQ) && i == pQ->rear)  
+    {  
+        //printf("队列已满，入队失败！\n");  
+        return false;  
+    } 
+
+    pQ->pBase[pQ->rear] = cmdn;  
+    pQ->rear=(pQ->rear+1)%QUEUE_SIZE;//队尾加1  
+    return true;  
+}
 /**
  * del_queue 
  * 发送命令出队列操作函数 
@@ -94,4 +135,32 @@ u8 en_queue(QUEUE *pQ,Usart1_CMD_PARAM cmdn);
  * 
  * @return Usart1_CMD_PARAM 命令n
  */
-Usart1_CMD_PARAM del_queue(QUEUE *pQ);
+bool del_queue(QUEUE *pQ)
+{
+	if(empty_queue(pQ))  
+        return 0;
+
+    pQ->front = (pQ->front+1) % QUEUE_SIZE;  
+    return 1;  
+}
+
+/**
+ * check_queue 
+ * 检查当且列表 头指针指向函数是否执行完成 
+ * 
+ * @author yuk (2016-10-13)
+ * 
+ * @param pQ 
+ * 
+ * @return bool 
+ */
+bool check_queue(QUEUE *pQ)
+{
+	bool i;
+
+	i = pQ->pBase[pQ->front]();
+	return i;
+}
+
+
+
