@@ -51,18 +51,22 @@ bool Usart1_CMD_D2(void);
 bool Usart1_CMD_E1(void);
 bool Usart1_CMD_E2(void);
 
-void Usart1_Recv_Pro(void);
-
-void USART1_Process(void)
-{
-	if(!empty_queue(&Q))
-	{
-		if(check_queue(&Q))
-		{
-			del_queue(&Q);
-		}
-	}
-}
+Usart1_CMD uart1_cmd_list[UART1_CMD_TOTAL] = {
+	Usart1_CMD_A1,			/*-0---A1---*/
+	Usart1_CMD_A2,			/*-1---A2---*/
+	Usart1_CMD_B1,			/*-2---B1---*/
+	Usart1_CMD_B2,			/*-3---B2---*/
+	Usart1_CMD_B3,			/*-4---B3---*/
+	Usart1_CMD_B4,			/*-5---B4---*/
+	Usart1_CMD_C1,			/*-6---C1---*/
+	Usart1_CMD_C2,			/*-7---C2---*/
+	Usart1_CMD_C3,			/*-8---C3---*/
+	Usart1_CMD_C4,			/*-9---C4---*/
+	Usart1_CMD_D1,			/*-10--D1---*/
+	Usart1_CMD_D2,			/*-11--D2---*/
+	Usart1_CMD_E1,			/*-12--E1---*/
+	Usart1_CMD_E2,			/*-13--E2---*/
+};
 
 #define   RX_BUFFER_LENGTH   100
 #define   TX_BUFFER_LENGTH   100
@@ -73,22 +77,26 @@ unsigned char  Out_waiting_index_G = 0;                                        /
 unsigned char  In_saved_index_G    = 0;                                        /* 已接收数据索引值              */
 unsigned char  In_waiting_index_G  = 0;                                        /* 待接收数据索引值              */
 
-const char CMD_A1[]="AT+SOCKB\r";
+const char CMD_A1[]="";
 const char CMD_A2[]="AT+SOCKB\r";
-char CMD_B1_1[]="AT+SOCKB\r";
-char CMD_B1_2[]="AT+SOCKB\r";
-char CMD_B1_3[]="AT+SOCKB\r";
-const char CMD_B2[]="AT+SOCKB\r";
-const char CMD_B3[]="AT+SOCKB\r";
-const char CMD_B4[]="AT+SOCKB\r";
-const char CMD_C1[]="AT+SOCKB\r";
-const char CMD_C2[]="AT+SOCKB\r";
-const char CMD_C3[]="AT+SOCKB\r";
-const char CMD_C4[]="AT+SOCKB\r";
+const char CMD_B1_1[]="AT+WJAP=";
+const char CMD_B1_2[]="AT+SOCKB=";
+const char CMD_B1_3[]="AT+TCPDISB=";
+const char CMD_B2[]="AT+WSCAN\r";
+const char CMD_B3[]="AT+WRMID=Hulong02\r";
+const char CMD_B4[]="AT+WAKEY=WPA2PSK,AES,2016101312";
+const char CMD_C1[]="+++a";
+const char CMD_C2[]="AT+TMODE=cmd\r";
+const char CMD_C3[]="AT+E=on\r";
+const char CMD_C4[]="AT+WMODE=APSTA\r";
 const char CMD_D1[]="AT+SOCKB\r";
 const char CMD_D2[]="AT+SOCKB\r";
-char CMD_E1[]="AT+SOCKB\r";
-char CMD_E2[]="AT+SOCKB\r";
+const char CMD_E1[]="AT+SOCKB\r";
+const char CMD_E2[]="AT+SOCKB\r";
+
+char CMDPAR_B1_1[] = {0,};
+char CMDPAR_B1_2[] = {0,};
+char CMDPAR_B1_3[] = {0,};
 
 typedef enum
 {
@@ -112,31 +120,35 @@ typedef enum
  
 const char * at_cmds_list[] = 
 {		
-		&CMD_A1,
-		&CMD_A2,
-		&CMD_B1_1,
-		&CMD_B1_2,
-		&CMD_B1_3,
-		&CMD_B2,
-		&CMD_B3,
-		&CMD_B4,
-		&CMD_C1,
-		&CMD_C2,
-		&CMD_C3,
-		&CMD_C4,
-		&CMD_D1,
-		&CMD_D2,
-		&CMD_E1,
-		&CMD_E2
+	&CMD_A1,
+	&CMD_A2,
+	&CMD_B1_1,
+	&CMD_B1_2,
+	&CMD_B1_3,
+	&CMD_B2,
+	&CMD_B3,
+	&CMD_B4,
+	&CMD_C1,
+	&CMD_C2,
+	&CMD_C3,
+	&CMD_C4,
+	&CMD_D1,
+	&CMD_D2,
+	&CMD_E1,
+	&CMD_E2
 };
 
+bool Usart1_CMD_Send(CMD_TYPE n);
+{
+	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
+	strcpy(GucUartTxBuffer,at_cmds_list[n]);
+	Out_waiting_index_G = strlen(GucUartTxBuffer);
+	USART1_SEND();
+}
 
 bool Usart1_CMD_A2(void)
 {
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_A2]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_A2);
 
 	if(1)
 		return true;
@@ -146,10 +158,7 @@ bool Usart1_CMD_A2(void)
 
 bool Usart1_CMD_B1_1(void)
 {
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_1]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_B1_1);
 
 	if(1)
 		return true;
@@ -160,23 +169,7 @@ bool Usart1_CMD_B1_1(void)
 
 bool Usart1_CMD_B1_2(void)
 {
-		memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-		strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_2]);
-		Out_waiting_index_G = strlen(GucUartTxBuffer);
-		USART1_SEND();
-
-		if(1)
-			return true;
-		else
-			return false;
-}
-
-bool Usart1_CMD_B1_3(void)
-{
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B1_3]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_B1_2);
 
 	if(1)
 		return true;
@@ -184,11 +177,29 @@ bool Usart1_CMD_B1_3(void)
 		return false;
 }
 
+bool Usart1_CMD_B1_3(void)
+{
+	Usart1_CMD_Send(AT_CMD_B1_3);
+
+	if(1)
+		return true;
+	else
+		return false;
+}
+
+/**
+ * Usart1_CMD_B1 
+ * 通信CMD_B1类命令处理函数 
+ * 
+ * @author yuk (2016-10-13)
+ * 
+ * @return bool 处理结束 返回1 未结束 返回0
+ */
 bool Usart1_CMD_B1(void)
 {
 	static unsigned char status = 0;
 
-	bool B1_step_ok = false;
+	bool B1_step_ok = 0;
 
 	switch(status)
 	{
@@ -206,17 +217,13 @@ bool Usart1_CMD_B1(void)
 			return B1_step_ok;
 		default:
 			break;
-
 	}
 }
 
 
 bool Usart1_CMD_B2(void)
 {
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B2]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_B2);
 
 	if(1)
 		return true;
@@ -226,10 +233,7 @@ bool Usart1_CMD_B2(void)
 
 bool Usart1_CMD_B3(void)
 {
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B3]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_B3);
 
 	if(1)
 		return true;
@@ -239,10 +243,7 @@ bool Usart1_CMD_B3(void)
 
 bool Usart1_CMD_B4(void)
 {
-	memset(GucUartTxBuffer,'\0',TX_BUFFER_LENGTH);
-	strcpy(GucUartTxBuffer,at_cmds_list[AT_CMD_B4]);
-	Out_waiting_index_G = strlen(GucUartTxBuffer);
-	USART1_SEND();
+	Usart1_CMD_Send(AT_CMD_B4);
 
 	if(1)
 		return true;
@@ -250,21 +251,24 @@ bool Usart1_CMD_B4(void)
 		return false;
 }
 
+                                 
+void Usart1_Rcv_Pro(void)
+{
 
-bool (*uart1_cmd_list[UART1_CMD_TOTAL])(void) = {
-	Usart1_CMD_A1,			/*-0---A1---*/
-	Usart1_CMD_A2,			/*-1---A2---*/
-	Usart1_CMD_B1,			/*-2---B1---*/
-	Usart1_CMD_B2,			/*-3---B2---*/
-	Usart1_CMD_B3,			/*-4---B3---*/
-	Usart1_CMD_B4,			/*-5---B4---*/
-	Usart1_CMD_C1,			/*-6---C1---*/
-	Usart1_CMD_C2,			/*-7---C2---*/
-	Usart1_CMD_C3,			/*-8---C3---*/
-	Usart1_CMD_C4,			/*-9---C4---*/
-	Usart1_CMD_D1,			/*-10--D1---*/
-	Usart1_CMD_D2,			/*-11--D2---*/
-	Usart1_CMD_E1,			/*-12--E1---*/
-	Usart1_CMD_E2,			/*-13--E2---*/
-};                                   
+}
 
+
+void USART1_Process(void)
+{
+	if(empty_queue(&Q))
+	{
+		en_queue(&Q, uart1_cmd_list[AT_CMD_D1]);
+	}
+	else
+	{
+		if(check_queue(&Q))
+		{
+			del_queue(&Q);
+		}
+	}
+}

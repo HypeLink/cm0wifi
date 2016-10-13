@@ -1,4 +1,4 @@
-#define UART1_CMD_TOTAL		13
+#define UART1_CMD_TOTAL		14
 
 bool Usart1_CMD_A2(void);
 bool Usart1_CMD_B1(void);

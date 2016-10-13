@@ -27,17 +27,19 @@
 *********************************************************************************************************/
 #include "cm0_uart_protocal.h"
 
-typedef bool (*Usart1_CMD)(u8 );
-
-typedef struct Queue2  
-{  
-    Usart1_CMD *pBase;	//pBase指向数组名（通常静态队列都使用循环队列）  
-	#define QUEUE_SIZE	21
-    unsigned char front;			//数组下标，这里规定从零开始  
+typedef struct Queue {  
+    Usart1_CMD *pBase;			//pBase指向数组名（通常静态队列都使用循环队列）  
+	#define QUEUE_SIZE	21		//循环队列长度
+    unsigned char front;		//数组下标，这里规定从零开始  
     unsigned char rear;  
-}QUEUE;//QUEUE代表了struct Queue
+} QUEUE;//QUEUE代表了struct Queue
 
-
+/**
+ * cmdqueue 
+ * 初始化指令按顺序写入队列 
+ * 
+ * @author yuk (2016-10-13)
+ */
 static Usart1_CMD cmdqueue[QUEUE_SIZE] = {
 	Usart1_CMD_C1,
 	Usart1_CMD_C2,
@@ -47,8 +49,8 @@ static Usart1_CMD cmdqueue[QUEUE_SIZE] = {
 };
 
 QUEUE Q;
-Usart1_CMD_PARAM cmd2null = {0,};
-u8 cmd3_delay_cnt = 0;
+
+Usart1_CMD cmd2null = {0,};
 
 /**
  * initQ 
@@ -61,8 +63,8 @@ u8 cmd3_delay_cnt = 0;
 void initQ(QUEUE *pQ)
 {
 	pQ->pBase = cmdqueue;
-	pQ->front=0;  
-    pQ->rear=3;
+	pQ->front = 0;  
+    pQ->rear = 3;
 }
 /**
  * full_queue 
@@ -77,9 +79,9 @@ void initQ(QUEUE *pQ)
 bool full_queue(QUEUE *pQ)
 {
 	if((pQ->rear+1)%QUEUE_SIZE == pQ->front)  
-        return true;  
+        return 1;  
     else  
-        return false;
+        return 0;
 }
 
 /**
@@ -94,10 +96,11 @@ bool full_queue(QUEUE *pQ)
  */
 bool empty_queue(QUEUE *pQ)
 {
-	if(pQ->rear==pQ->front)//因为队列不为空时，rear和front肯定不相等  
-        return true;  
+	//因为队列不为空时，rear和front肯定不相等 
+	if(pQ->rear==pQ->front) 
+        return 1;  
     else  
-        return false;  
+        return 0;  
 }
 
 /**
@@ -111,20 +114,21 @@ bool empty_queue(QUEUE *pQ)
  * 
  * @return bool 
  */
-bool en_queue(QUEUE *pQ,Usart1_CMD cmdn)
+bool en_queue(QUEUE *pQ, Usart1_CMD cmdn)
 {
 	u8 i = pQ->front;
 
 	if(full_queue(pQ) && i == pQ->rear)  
     {  
         //printf("队列已满，入队失败！\n");  
-        return false;  
+        return 0;  
     } 
 
     pQ->pBase[pQ->rear] = cmdn;  
     pQ->rear=(pQ->rear+1)%QUEUE_SIZE;//队尾加1  
-    return true;  
+    return 1;  
 }
+
 /**
  * del_queue 
  * 发送命令出队列操作函数 
