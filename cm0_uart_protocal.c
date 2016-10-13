@@ -53,7 +53,21 @@ bool Usart1_CMD_E2(void);
 
 void Usart1_Recv_Pro(void);
 
+<<<<<<< HEAD
 void USART1_Process(void)
+=======
+/**wusadadadp***/
+
+typedef enum
+{
+	false,
+	true
+}bool;
+
+#define  dl_cmd_total   50				//¶ÓÁÐÈÝÁ¿
+
+typedef struct
+>>>>>>> d7d26a91f85ca52633f708379340a9f54fc3453a
 {
 	if(!empty_queue(&Q))
 	{
