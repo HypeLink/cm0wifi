@@ -27,7 +27,7 @@
 *********************************************************************************************************/
 #include "cm0_uart_protocal.h"
 
-typedef bool (*Usart1_CMD)(u8 );
+typedef bool (*Usart1_CMD)(void);
 
 typedef struct Queue2  
 {  
@@ -36,7 +36,6 @@ typedef struct Queue2
     unsigned char front;			//数组下标，这里规定从零开始  
     unsigned char rear;  
 }QUEUE;//QUEUE代表了struct Queue
-
 
 static Usart1_CMD cmdqueue[QUEUE_SIZE] = {
 	Usart1_CMD_C1,
