@@ -53,7 +53,6 @@ bool Usart1_CMD_E2(void);
 void Usart1_Recv_Pro(void);
 
 
-
 typedef enum
 {
 	false,
