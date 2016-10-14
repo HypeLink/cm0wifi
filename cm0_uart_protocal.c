@@ -76,7 +76,7 @@ unsigned char  In_waiting_index_G  = 0;                                        /
 const char CMD_A1[]="0000000";
 const char CMD_A2[]="AT+SOCKB\r";
 char CMD_B1_1[]="AT+WJAP=192.168.1.1,wasdwasdwasd\r";
-char CMD_B1_2[]="AT+SOCKB=protocol,43,192.168.1.1\r";
+char CMD_B1_2[]="AT+SOCKB=TCP,43,192.168.1.1\r";
 const char CMD_B1_3[]="AT+TCPDISB=on\r";
 const char CMD_B2[]="0000000";
 const char CMD_B3[]="AT+WRMID=wasdwasd\r";
