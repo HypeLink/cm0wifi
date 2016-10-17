@@ -28,10 +28,10 @@
 #include "cm0_uart_protocal.h"
 
 typedef struct Queue {  
-    Usart1_CMD *pBase;			//pBase指向数组名（通常静态队列都使用循环队列）  
-	#define QUEUE_SIZE	21		//循环队列长度
-    unsigned char front;		//数组下标，这里规定从零开始  
-    unsigned char rear;  
+    CMD_TYPE *pBase;			//pBase指向数组名（通常静态队列都使用循环队列）  
+	#define QUEUE_SIZE	11		//循环队列长度
+    Uint8 front;		//数组下标，这里规定从零开始  
+    Uint8 rear;  
 } QUEUE;//QUEUE代表了struct Queue
 
 /**
@@ -40,17 +40,18 @@ typedef struct Queue {
  * 
  * @author yuk (2016-10-13)
  */
-static Usart1_CMD cmdqueue[QUEUE_SIZE] = {
-	Usart1_CMD_C1,
-	Usart1_CMD_C2,
-	Usart1_CMD_C3,
-	Usart1_CMD_C4,
-	0,
+static CMD_TYPE cmdqueue[QUEUE_SIZE] = {
+	CMD_C1,
+    CMD_C2,
+    CMD_C3,
+    CMD_C4,
+    0,0,0,0,0,
 };
 
 QUEUE Q;
 
 Usart1_CMD cmd2null = {0,};
+
 
 /**
  * initQ 
@@ -114,7 +115,7 @@ bool empty_queue(QUEUE *pQ)
  * 
  * @return bool 
  */
-bool en_queue(QUEUE *pQ, Usart1_CMD cmdn)
+bool en_queue(QUEUE *pQ, CMD_TYPE cmdn)
 {
 	u8 i = pQ->front;
 
@@ -137,11 +138,11 @@ bool en_queue(QUEUE *pQ, Usart1_CMD cmdn)
  * 
  * @param pQ   队列指针 
  * 
- * @return Usart1_CMD_PARAM 命令n
+ * @return CMD_TYPE 命令n
  */
 bool del_queue(QUEUE *pQ)
 {
-	if(empty_queue(pQ))  
+    if(empty_queue(pQ))  
         return 0;
 
     pQ->front = (pQ->front+1) % QUEUE_SIZE;  
@@ -160,11 +161,29 @@ bool del_queue(QUEUE *pQ)
  */
 bool check_queue(QUEUE *pQ)
 {
-	bool i;
+	CMD_TYPE cmd_i;
 
-	i = pQ->pBase[pQ->front]();
-	return i;
+	cmd_i = pQ->pBase[pQ->front];
+	
+	return Usart1_CMD_Send(cmd_i);
 }
 
+/**
+ * get_queue_0 
+ * 获取当前队列front里正在执行的命令 
+ * 
+ * @author yuk (2016-10-17)
+ * 
+ * @param pQ 
+ * 
+ * @return CMD_TYPE 
+ */
+CMD_TYPE get_queue_0(QUEUE *pQ)
+{
+	CMD_TYPE cmd_i;
 
+	cmd_i = pQ->pBase[pQ->front];
+
+	return cmd_i;
+}
 
